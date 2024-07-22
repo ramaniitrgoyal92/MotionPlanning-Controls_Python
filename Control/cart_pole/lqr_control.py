@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 from numpy.linalg import inv, eig
+import matplotlib.animation as animation
+from matplotlib.animation import PillowWriter
 
 # Model Parameters
 
@@ -20,6 +22,8 @@ R = np.diag([0.01])
 delta_t = 0.1
 sim_time = 5.0
 show_animation = True
+save_animation = True
+plot_results = True
 
 def main():
     time = 0.0
@@ -49,31 +53,58 @@ def main():
             theta = float(x[2, 0])
             plot_cart(px, theta)
             plt.xlim([-5.0, 2.0])
+            plt.ylim([0, 3.0])  
             plt.pause(0.001)
+            plt.grid()
+
 
     print("Finished")
     print(f"final x - {x[0]}, final theta = {x[2]}")
+    
     if show_animation:
         plt.show()
 
-    plot_pos_theta(u_traj,pos_traj,theta_traj)
+    if save_animation:
+        fig, ax = plt.subplots()
+        ax.set_xlim([-5.0, 2.0])
+        ax.set_ylim([0, 3.0])
+
+        def update(frame_number):
+            px = float(pos_traj[frame_number])
+            theta = float(theta_traj[frame_number])
+            ax.clear()
+            plot_cart(px, theta)
+            ax.set_xlim([-5.0, 2.0])
+            ax.set_ylim([0, 3.0])  
+            plt.grid()  
+
+        ani = animation.FuncAnimation(fig, update, frames=int(sim_time/delta_t), repeat=False)
+        ani.save('animation.gif', writer=PillowWriter(fps=10))
+        plt.show()
+
+    if plot_results:
+        plot_pos_theta(u_traj,pos_traj,theta_traj)
+
 
 
 def plot_pos_theta(u_traj,pos_traj,theta_traj):
     plt.figure()
     plt.plot(u_traj)
     plt.ylabel("control Input")
+    plt.grid()
     plt.xlabel("time")
 
     plt.figure()
     plt.plot(pos_traj)
     plt.ylabel("Position")
+    plt.grid()
     plt.xlabel("time")
 
     plt.figure()
     plt.plot(theta_traj)
     plt.ylabel("Theta")
     plt.xlabel("time")
+    plt.grid()
     plt.show()
 
 def get_model():
