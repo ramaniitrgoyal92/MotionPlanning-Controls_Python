@@ -1,8 +1,8 @@
 Python codes for Motion Planning and Controls
 
 
-# Controls
-## Simple Cart-Pole control using LQR and MPC
+## Controls
+### Simple Cart-Pole control using LQR and MPC
 
-![Cart Pole Animation](https://github.com/ramaniitrgoyal92/MotionPlanningAndControls_Python/tree/master/Control/cart_pole/animation.gif)
+![CartPoleAnimation](https://github.com/ramaniitrgoyal92/MotionPlanningAndControls_Python/raw/master/Control/cart_pole/animation.gif)
 
