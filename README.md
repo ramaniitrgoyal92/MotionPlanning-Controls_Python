@@ -6,3 +6,8 @@ Python codes for Motion Planning and Controls
 
 ![CartPoleAnimation](https://github.com/ramaniitrgoyal92/MotionPlanningAndControls_Python/raw/master/Control/cart_pole/animation_lqr_control.gif)
 
+
+## Planning
+### Standard Astar
+
+![AStarAnimation](https://github.com/ramaniitrgoyal92/MotionPlanningAndControls_Python/raw/master/PathPlanning/animation_astar.gif)
