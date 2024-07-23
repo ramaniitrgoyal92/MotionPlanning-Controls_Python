@@ -79,7 +79,7 @@ def main():
             plt.grid()  
 
         ani = animation.FuncAnimation(fig, update, frames=int(sim_time/delta_t), repeat=False)
-        ani.save('animation.gif', writer=PillowWriter(fps=10))
+        ani.save('animation_lqr_control.gif', writer=PillowWriter(fps=10))
         plt.show()
 
     if plot_results:

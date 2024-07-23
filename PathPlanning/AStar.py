@@ -1,15 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import matplotlib.animation as animation
+from matplotlib.animation import PillowWriter
 
-show_animation = True
-
+show_animation = False
+save_animation = True
 
 class AStarPlanner:
 
-    def __init__(self,resolution,width_x):
+    def __init__(self,ox,oy,resolution):
+        self.ox = ox
+        self.oy = oy
+        self.min_x = round(min(ox))
+        self.min_y = round(min(oy))
+        self.max_x = round(max(ox))
+        self.max_y = round(max(oy))
+        
         self.resolution = resolution
-        self.width_x = width_x
+        self.width_x = round((self.max_x - self.min_x) / self.resolution)
+        self.width_y = round((self.max_y - self.min_y) / self.resolution)
         self.motion = self.get_motion()
 
     class Node:
@@ -27,32 +37,71 @@ class AStarPlanner:
 
         startNode = self.Node(sx,sy,0.0,-1)
 
-        visited = set()
-        visited.add(startNode)
+        # visited = set()
+        # visited.add(startNode)
 
         openset = dict()
+        closedset = dict()
         openset[self.get_node_idx(startNode)] = startNode
 
         while len(openset)!=0:
             current_idx = min(openset, key=lambda o: openset[o].cost+self.heuristic(openset[o],gx,gy))
             currentNode = openset[current_idx]
 
-            if currentNode.x != gx and currentNode.y != gy:
+            if show_animation:
+                plt.plot(currentNode.x,currentNode.y,"xc")
+                if len(closedset.keys()) % 100 == 0:
+                    plt.pause(0.0001)
+
+            
+            if currentNode.x == gx and currentNode.y == gy:
+                print("Found Goal!")
+                # goalNode = currentNode
                 break
 
-            visited.add(currentNode)
+            del openset[current_idx]
+
+            closedset[current_idx] = currentNode
+
+            # visited.add(currentNode)
 
             for i, _ in enumerate(self.motion):
-                newNode = self.node(currentNode.x+self.motion[i][0],
+                newNode = self.Node(currentNode.x+self.motion[i][0],
                                 currentNode.y+self.motion[i][1],
                                 currentNode.cost+self.motion[i][2],
                                 self.get_node_idx(currentNode))
-                # newNode.cost = currentNode.cost + cost_matrix[self.get_node_idx(currentNode)][self.get_node_idx(newNode)]
-                # newNode.heuristic = newNode.cost + self.heuristic(newNode)
-                # newNode.parentNode = currentNode
+                
+                if self.hit_obst(newNode):
+                    continue
+
+                newNode_idx = self.get_node_idx(newNode)
+                if newNode_idx in closedset:
+                    continue
                     
-                if newNode not in visited:    
-                    openset[self.get_node_idx(newNode)] = newNode
+                if newNode not in openset:    
+                    openset[newNode_idx] = newNode
+                else:
+                    if openset[newNode_idx].cost > newNode.cost:
+                        openset[newNode_idx] = newNode
+
+        rx, ry = self.get_final_path(currentNode,closedset)
+        return rx, ry, closedset
+
+    def hit_obst(self,newNode):
+        if (newNode.x, newNode.y) in set(zip(self.ox, self.oy)):
+            return True
+        else:
+            return False
+
+    def get_final_path(self,goalNode,closedset):
+        rx, ry = [goalNode.x], [goalNode.y]
+        parentIndex = goalNode.parentIndex
+        while parentIndex!=-1:
+            rx.append(closedset[parentIndex].x)
+            ry.append(closedset[parentIndex].y)
+            parentIndex = closedset[parentIndex].parentIndex
+            
+        return rx, ry    
 
     @staticmethod
     def get_motion():
@@ -64,7 +113,7 @@ class AStarPlanner:
         return motion
 
     def get_node_idx(self,node):
-        return (node.y*self.width_x+node.x)
+        return ((node.y- self.min_y)*self.width_x+(node.x- self.min_x))
 
     def heuristic(self,node,gx,gy):
         return math.sqrt((node.x-gx)**2+(node.y-gy)**2)
@@ -108,13 +157,58 @@ def main():
         plt.grid(True)
         plt.axis("equal")
 
-    planner = AStarPlanner(resolution=10,width_x = 10)
-    rx, ry = planner.planning(sx,sy,gx,gy)
+    planner = AStarPlanner(ox,oy,resolution=1.0)
+    rx, ry, closedset = planner.planning(sx,sy,gx,gy)
+
+    print(len(closedset))
 
     if show_animation:  # pragma: no cover
         plt.plot(rx, ry, "-r")
         plt.pause(0.001)
         plt.show()
+
+    if save_animation:
+        fig, ax = plt.subplots()
+        ax.plot(ox, oy, ".k")
+        ax.plot(sx, sy, "og")
+        ax.plot(gx, gy, "xb")
+        plt.grid(True)
+        plt.axis("equal")
+
+        def update(frame):
+            if frame % 1 == 0:
+                key = list(closedset.keys())[frame]
+                currentNode = closedset[key]
+                ax.plot(currentNode.x, currentNode.y, "xc")
+                plt.grid(True)
+                plt.axis("equal")
+            if frame == len(closedset):
+                plt.plot(rx, ry, "-r")
+
+
+
+        ani = animation.FuncAnimation(fig, update, frames=len(closedset), interval = 1, repeat=False)        
+        ani.save('animation.gif', writer=PillowWriter(fps=50))
+        plt.show()
+
+        # def update(frame):
+        #     # ax.clear()
+        #     ax.plot(ox, oy, ".k")
+        #     ax.plot(sx, sy, "og")
+        #     ax.plot(gx, gy, "xb")
+        #     if frame%10 == 0:
+        #         key = list(closedset.keys())[frame]
+        #         currentNode = closedset[key]
+        #         ax.plot(currentNode.x, currentNode.y, "xc")
+
+        #     ax.grid(True)
+        #     ax.axis("equal")  
+
+        # ani = animation.FuncAnimation(fig, update, frames=200,
+        # interval=100, repeat=False)
+        # ani.save('animation.gif', writer=PillowWriter(fps=10))
+        # plt.show()
+    
 
 
 if __name__ == '__main__':
