@@ -4,22 +4,21 @@ import math
 import matplotlib.animation as animation
 from matplotlib.animation import PillowWriter
 
-show_animation = False
-save_animation = True
+show_animation = True
+save_animation = False
 
 class AStarPlanner:
 
-    def __init__(self,ox,oy,resolution):
+    def __init__(self,ox,oy):
         self.ox = ox
         self.oy = oy
         self.min_x = round(min(ox))
         self.min_y = round(min(oy))
         self.max_x = round(max(ox))
         self.max_y = round(max(oy))
-        
-        self.resolution = resolution
-        self.width_x = round((self.max_x - self.min_x) / self.resolution)
-        self.width_y = round((self.max_y - self.min_y) / self.resolution)
+
+        self.width_x = round((self.max_x - self.min_x))
+        self.width_y = round((self.max_y - self.min_y))
         self.motion = self.get_motion()
 
     class Node:
@@ -36,9 +35,6 @@ class AStarPlanner:
     def planning(self,sx,sy,gx,gy):
 
         startNode = self.Node(sx,sy,0.0,-1)
-
-        # visited = set()
-        # visited.add(startNode)
 
         openset = dict()
         closedset = dict()
@@ -62,8 +58,6 @@ class AStarPlanner:
             del openset[current_idx]
 
             closedset[current_idx] = currentNode
-
-            # visited.add(currentNode)
 
             for i, _ in enumerate(self.motion):
                 newNode = self.Node(currentNode.x+self.motion[i][0],
@@ -92,6 +86,8 @@ class AStarPlanner:
             return True
         else:
             return False
+        
+
 
     def get_final_path(self,goalNode,closedset):
         rx, ry = [goalNode.x], [goalNode.y]
@@ -117,8 +113,6 @@ class AStarPlanner:
 
     def heuristic(self,node,gx,gy):
         return math.sqrt((node.x-gx)**2+(node.y-gy)**2)
-
-
 
 
 def main():
@@ -157,7 +151,7 @@ def main():
         plt.grid(True)
         plt.axis("equal")
 
-    planner = AStarPlanner(ox,oy,resolution=1.0)
+    planner = AStarPlanner(ox,oy)
     rx, ry, closedset = planner.planning(sx,sy,gx,gy)
 
     print(len(closedset))
@@ -182,35 +176,13 @@ def main():
                 ax.plot(currentNode.x, currentNode.y, "xc")
                 plt.grid(True)
                 plt.axis("equal")
-            if frame == len(closedset):
+            if frame == len(closedset)-1:
                 plt.plot(rx, ry, "-r")
 
-
-
         ani = animation.FuncAnimation(fig, update, frames=len(closedset), interval = 1, repeat=False)        
-        ani.save('animation.gif', writer=PillowWriter(fps=50))
+        ani.save('animation_astar.gif', writer=PillowWriter(fps=50))
         plt.show()
-
-        # def update(frame):
-        #     # ax.clear()
-        #     ax.plot(ox, oy, ".k")
-        #     ax.plot(sx, sy, "og")
-        #     ax.plot(gx, gy, "xb")
-        #     if frame%10 == 0:
-        #         key = list(closedset.keys())[frame]
-        #         currentNode = closedset[key]
-        #         ax.plot(currentNode.x, currentNode.y, "xc")
-
-        #     ax.grid(True)
-        #     ax.axis("equal")  
-
-        # ani = animation.FuncAnimation(fig, update, frames=200,
-        # interval=100, repeat=False)
-        # ani.save('animation.gif', writer=PillowWriter(fps=10))
-        # plt.show()
-    
 
 
 if __name__ == '__main__':
     main()
-
