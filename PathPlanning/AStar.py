@@ -4,12 +4,12 @@ import math
 import matplotlib.animation as animation
 from matplotlib.animation import PillowWriter
 
-show_animation = False
-save_animation = True
+show_animation = True
+save_animation = False
 
 class AStarPlanner:
 
-    def __init__(self,ox,oy,resolution):
+    def __init__(self,ox,oy,resolution,turn_rad):
         self.ox = ox
         self.oy = oy
         self.min_x = round(min(ox))
@@ -18,9 +18,11 @@ class AStarPlanner:
         self.max_y = round(max(oy))
         
         self.resolution = resolution
+        self.turn_rad = turn_rad
         self.width_x = round((self.max_x - self.min_x) / self.resolution)
         self.width_y = round((self.max_y - self.min_y) / self.resolution)
         self.motion = self.get_motion()
+        self.gen_obstacle_map()
 
     class Node:
         def __init__(self,x,y,cost,parentIndex):
@@ -88,10 +90,24 @@ class AStarPlanner:
         return rx, ry, closedset
 
     def hit_obst(self,newNode):
+        # d = 0
+        # for iox, ioy in zip(self.ox, self.oy):
+        #     d = min(d,math.hypot(iox - newNode.x, ioy - newNode.y))
+        # if d <= self.turn_rad:
+        #     return True
+        # else:
+        #     return False
+
         if (newNode.x, newNode.y) in set(zip(self.ox, self.oy)):
             return True
         else:
             return False
+        
+        # if self.obstacle_map[int(newNode.x)][int(newNode.y)]:
+        #     return False
+        
+        # return True
+
 
     def get_final_path(self,goalNode,closedset):
         rx, ry = [goalNode.x], [goalNode.y]
@@ -118,7 +134,19 @@ class AStarPlanner:
     def heuristic(self,node,gx,gy):
         return math.sqrt((node.x-gx)**2+(node.y-gy)**2)
 
-
+    def gen_obstacle_map(self):
+    #     # obstacle map generation
+        self.obstacle_map = [[False for _ in range(self.width_y)]
+                             for _ in range(self.width_x)]
+        for ix in range(self.width_x):
+    #         x = self.calc_grid_position(ix, self.min_x)
+            for iy in range(self.width_y):
+    #             y = self.calc_grid_position(iy, self.min_y)
+                for iox, ioy in zip(self.ox, self.oy):
+                    d = math.hypot(iox - ix, ioy - iy)
+                    if d <= self.turn_rad:
+                        self.obstacle_map[ix][iy] = True
+                        break
 
 
 def main():
@@ -157,7 +185,7 @@ def main():
         plt.grid(True)
         plt.axis("equal")
 
-    planner = AStarPlanner(ox,oy,resolution=1.0)
+    planner = AStarPlanner(ox,oy,resolution=1.0,turn_rad=1.0)
     rx, ry, closedset = planner.planning(sx,sy,gx,gy)
 
     print(len(closedset))
@@ -182,35 +210,13 @@ def main():
                 ax.plot(currentNode.x, currentNode.y, "xc")
                 plt.grid(True)
                 plt.axis("equal")
-            if frame == len(closedset):
+            if frame == len(closedset)-1:
                 plt.plot(rx, ry, "-r")
 
-
-
         ani = animation.FuncAnimation(fig, update, frames=len(closedset), interval = 1, repeat=False)        
-        ani.save('animation.gif', writer=PillowWriter(fps=50))
+        ani.save('animation_astar.gif', writer=PillowWriter(fps=50))
         plt.show()
-
-        # def update(frame):
-        #     # ax.clear()
-        #     ax.plot(ox, oy, ".k")
-        #     ax.plot(sx, sy, "og")
-        #     ax.plot(gx, gy, "xb")
-        #     if frame%10 == 0:
-        #         key = list(closedset.keys())[frame]
-        #         currentNode = closedset[key]
-        #         ax.plot(currentNode.x, currentNode.y, "xc")
-
-        #     ax.grid(True)
-        #     ax.axis("equal")  
-
-        # ani = animation.FuncAnimation(fig, update, frames=200,
-        # interval=100, repeat=False)
-        # ani.save('animation.gif', writer=PillowWriter(fps=10))
-        # plt.show()
-    
 
 
 if __name__ == '__main__':
     main()
-
