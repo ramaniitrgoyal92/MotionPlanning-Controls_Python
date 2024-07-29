@@ -9,20 +9,17 @@ save_animation = False
 
 class AStarPlanner:
 
-    def __init__(self,ox,oy,resolution,turn_rad):
+    def __init__(self,ox,oy):
         self.ox = ox
         self.oy = oy
         self.min_x = round(min(ox))
         self.min_y = round(min(oy))
         self.max_x = round(max(ox))
         self.max_y = round(max(oy))
-        
-        self.resolution = resolution
-        self.turn_rad = turn_rad
-        self.width_x = round((self.max_x - self.min_x) / self.resolution)
-        self.width_y = round((self.max_y - self.min_y) / self.resolution)
+
+        self.width_x = round((self.max_x - self.min_x))
+        self.width_y = round((self.max_y - self.min_y))
         self.motion = self.get_motion()
-        self.gen_obstacle_map()
 
     class Node:
         def __init__(self,x,y,cost,parentIndex):
@@ -38,9 +35,6 @@ class AStarPlanner:
     def planning(self,sx,sy,gx,gy):
 
         startNode = self.Node(sx,sy,0.0,-1)
-
-        # visited = set()
-        # visited.add(startNode)
 
         openset = dict()
         closedset = dict()
@@ -65,8 +59,6 @@ class AStarPlanner:
 
             closedset[current_idx] = currentNode
 
-            # visited.add(currentNode)
-
             for i, _ in enumerate(self.motion):
                 newNode = self.Node(currentNode.x+self.motion[i][0],
                                 currentNode.y+self.motion[i][1],
@@ -90,23 +82,11 @@ class AStarPlanner:
         return rx, ry, closedset
 
     def hit_obst(self,newNode):
-        # d = 0
-        # for iox, ioy in zip(self.ox, self.oy):
-        #     d = min(d,math.hypot(iox - newNode.x, ioy - newNode.y))
-        # if d <= self.turn_rad:
-        #     return True
-        # else:
-        #     return False
-
         if (newNode.x, newNode.y) in set(zip(self.ox, self.oy)):
             return True
         else:
             return False
         
-        # if self.obstacle_map[int(newNode.x)][int(newNode.y)]:
-        #     return False
-        
-        # return True
 
 
     def get_final_path(self,goalNode,closedset):
@@ -133,20 +113,6 @@ class AStarPlanner:
 
     def heuristic(self,node,gx,gy):
         return math.sqrt((node.x-gx)**2+(node.y-gy)**2)
-
-    def gen_obstacle_map(self):
-    #     # obstacle map generation
-        self.obstacle_map = [[False for _ in range(self.width_y)]
-                             for _ in range(self.width_x)]
-        for ix in range(self.width_x):
-    #         x = self.calc_grid_position(ix, self.min_x)
-            for iy in range(self.width_y):
-    #             y = self.calc_grid_position(iy, self.min_y)
-                for iox, ioy in zip(self.ox, self.oy):
-                    d = math.hypot(iox - ix, ioy - iy)
-                    if d <= self.turn_rad:
-                        self.obstacle_map[ix][iy] = True
-                        break
 
 
 def main():
@@ -185,7 +151,7 @@ def main():
         plt.grid(True)
         plt.axis("equal")
 
-    planner = AStarPlanner(ox,oy,resolution=1.0,turn_rad=1.0)
+    planner = AStarPlanner(ox,oy)
     rx, ry, closedset = planner.planning(sx,sy,gx,gy)
 
     print(len(closedset))
